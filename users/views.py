@@ -33,6 +33,7 @@ from django.views.decorators.csrf import csrf_exempt
 
 @csrf_exempt
 def health_check(request):
+    print("DEBUGGING CSRF ERROR")
     return JsonResponse({"status": "ok", "message": "Backend is LIVE!"})
 
 
