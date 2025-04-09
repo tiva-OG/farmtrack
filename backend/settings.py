@@ -105,14 +105,7 @@ WSGI_APPLICATION = "backend.wsgi.application"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "farmtrack",
-        "USER": "postgres",
-        "PASSWORD": "3142",
-        "HOST": "localhost",
-        "PORT": "5432",
-    }
+    "default": env.db(),
 }
 
 
