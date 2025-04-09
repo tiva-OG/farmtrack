@@ -9,6 +9,7 @@ from .views import (
     PasswordResetRequestView,
     PasswordResetConfirmView,
     short_link_redirect,
+    health_check,
 )
 
 
@@ -17,6 +18,7 @@ router.register(r"user", UserViewSet)
 
 urlpatterns = [
     path("", include(router.urls)),
+    path("health/", health_check),
     path("token-refresh/", TokenRefreshView.as_view(), name="refresh-token"),
     path("login/", TokenObtainPairView.as_view(), name="login"),
     path("register/", RegisterView.as_view(), name="register"),
