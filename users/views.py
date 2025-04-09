@@ -27,6 +27,15 @@ from .serializers import (
 
 User = get_user_model()
 
+# Simple Backend Health Check View
+from django.http import JsonResponse
+
+def health_check(request):
+    return JsonResponse({"status": "ok", "message": "Backend is LIVE!"})
+
+
+
+
 
 # REGISTER USER
 class RegisterView(APIView):
