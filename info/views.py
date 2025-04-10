@@ -3,6 +3,7 @@ from datetime import timedelta, date
 
 from django.db.models import Sum
 from django.db.models.functions import TruncDate
+from django.views.decorators.csrf import csrf_exempt
 
 from rest_framework import status
 from rest_framework.views import APIView
@@ -14,16 +15,10 @@ from inventory.models import Feed, Livestock
 from sales_expenses.models import SalesExpenses
 from .serializers import DashboardInfoSerializer, AnalyticsInfoSerializer
 
-from django.views.decorators.csrf import csrf_exempt
  
- @csrf_exempt
- def health_check(request):
-     return JsonResponse({"status": "ok", "message": "Backend is LIVE!"})
-
-
 @csrf_exempt
 def check_app(request):
-    return Response({"message": "APP IS RUNNING LIVE!"}, status=status.HTTP_200_OK)
+ return JsonResponse({"status": "ok", "message": "Backend is LIVE!"})
 
 
 # DASHBOARD info:
