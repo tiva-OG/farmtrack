@@ -2,6 +2,7 @@ from decimal import Decimal
 from datetime import timedelta, date
 
 from django.db.models import Sum
+from django.http import JsonResponse
 from django.db.models.functions import TruncDate
 from django.views.decorators.csrf import csrf_exempt
 
@@ -18,7 +19,7 @@ from .serializers import DashboardInfoSerializer, AnalyticsInfoSerializer
 
 @csrf_exempt
 def check_app(request):
-    return Response({"message": "ok", "message": "Backend is LIVE!"}, status=status.HTTP_200_OK)
+    return JsonResponse({"message": "ok", "message": "Backend is LIVE!"})
 
 
 # DASHBOARD info:
