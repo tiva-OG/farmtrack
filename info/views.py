@@ -15,10 +15,10 @@ from inventory.models import Feed, Livestock
 from sales_expenses.models import SalesExpenses
 from .serializers import DashboardInfoSerializer, AnalyticsInfoSerializer
 
- 
+
 @csrf_exempt
 def check_app(request):
- return JsonResponse({"status": "ok", "message": "Backend is LIVE!"})
+    return Response({"message": "ok", "message": "Backend is LIVE!"}, status=status.HTTP_200_OK)
 
 
 # DASHBOARD info:
