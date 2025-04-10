@@ -29,6 +29,18 @@ from .serializers import (
 
 User = get_user_model()
 
+# Simple Backend Health Check View
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+def health_check(request):
+    print("DEBUGGING CSRF ERROR")
+    return JsonResponse({"status": "ok", "message": "Backend is LIVE!"})
+
+
+
+
 
 # REGISTER USER
 class RegisterView(APIView):
