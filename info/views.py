@@ -14,12 +14,16 @@ from inventory.models import Feed, Livestock
 from sales_expenses.models import SalesExpenses
 from .serializers import DashboardInfoSerializer, AnalyticsInfoSerializer
 
-# Create your views here.
+from django.views.decorators.csrf import csrf_exempt
+ 
+ @csrf_exempt
+ def health_check(request):
+     return JsonResponse({"status": "ok", "message": "Backend is LIVE!"})
 
 
-@api_view(["GET"])
+@csrf_exempt
 def check_app(request):
-    return Response({"message": "APP IS RUNNING INFO!"}, status=status.HTTP_200_OK)
+    return Response({"message": "APP IS RUNNING LIVE!"}, status=status.HTTP_200_OK)
 
 
 # DASHBOARD info:
