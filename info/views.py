@@ -1,3 +1,11 @@
+from decimal import Decimal
+from datetime import timedelta, date
+
+from django.db.models import Sum
+from django.http import JsonResponse
+from django.db.models.functions import TruncDate
+from django.views.decorators.csrf import csrf_exempt
+
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -5,42 +13,106 @@ from rest_framework.permissions import IsAuthenticated
 
 from sales_expenses.services import get_monthly_net_income, get_weekly_sales_purchases
 from .serializers import DashboardInfoSerializer, AnalyticsInfoSerializer
-from .services import (
-    calculate_feed_data,
-    calculate_livestock_data,
-    get_sales_data,
-    get_total_cost,
-    send_analytics_report,
-)
-
-from django.shortcuts import render
 
 
-def preview_email(request):
-    user = {"first_name": "Tiva"}
-    weekly_data = [
-        {"week": "Week 1", "sales": "₦20,000", "purchases": "₦10,000"},
-        {"week": "Week 2", "sales": "₦25,000", "purchases": "₦15,000"},
-        {"week": "Week 3", "sales": "₦30,000", "purchases": "₦18,000"},
-        {"week": "Week 4", "sales": "₦22,000", "purchases": "₦12,000"},
-    ]
-    monthly_data = [
-        {"month": "Nov", "net_income": "₦80,000"},
-        {"month": "Dec", "net_income": "₦100,000"},
-        {"month": "Jan", "net_income": "₦90,000"},
-        {"month": "Feb", "net_income": "₦110,000"},
-        {"month": "Mar", "net_income": "₦95,000"},
-        {"month": "Apr", "net_income": "₦105,000"},
-    ]
-    return render(
-        request,
-        "emails/otp.html",
-        {
-            "user": user,
-            "weekly_data": weekly_data,
-            "monthly_data": monthly_data,
-        },
+@csrf_exempt
+def check_app(request):
+    return JsonResponse({"message": "ok", "message": "Backend is LIVE!"})
+
+
+# DASHBOARD info:
+# feed stock (w/ low_stock_threshold);
+# fish_count && poultry_count;
+# total_sales
+# sales_trend for 14 days && last 3 inventory entries
+
+
+def get_total_quantity(model, user, name, action):
+    return (
+        model.objects.filter(
+            farmer=user,
+            name__iexact=name,
+            action__iexact=action,
+        ).aggregate(
+            total=Sum("quantity")
+        )["total"]
+        or 0
     )
+
+
+def get_total_cost(user, record_type):
+    return SalesExpenses.objects.filter(farmer=user, record_type__iexact=record_type).aggregate(total=Sum("cost"))["total"] or 0
+
+
+def calculate_feed_data(user, livestock_types):
+    feed_info = []
+
+    for livestock in livestock_types:
+        name = f"{livestock} Feed"
+        initial = get_total_quantity(Feed, user, name, "Initial")
+        bought = get_total_quantity(Feed, user, name, "Bought")
+        consumed = get_total_quantity(Feed, user, name, "Consumed")
+        feed_left = (initial + bought) - consumed
+
+        feed_info.append(
+            {
+                "name": name,
+                "initial": initial,
+                "bought": bought,
+                "consumed": consumed,
+                "left": feed_left,
+            }
+        )
+
+    return feed_info
+
+
+def calculate_livestock_data(user, livestock_types):
+    livestock_count = []
+
+    for livestock in livestock_types:
+        initial = get_total_quantity(Livestock, user, livestock, "Initial")
+        bought = get_total_quantity(Livestock, user, livestock, "Bought")
+        sold = get_total_quantity(Livestock, user, livestock, "Sold")
+        dead = get_total_quantity(Livestock, user, livestock, "Dead")
+        count = max((initial + bought) - (sold + dead), 0)
+
+        livestock_count.append(
+            {
+                "name": livestock,
+                "initial": initial,
+                "bought": bought,
+                "sold": sold,
+                "dead": dead,
+                "count": count,
+            }
+        )
+
+    return livestock_count
+
+
+def get_sales_data(user, period):
+    today = date.today()
+    start_date = today - timedelta(days=period)
+
+    sales_data = (
+        SalesExpenses.objects.filter(farmer=user, record_type="Sale", entry_date__range=(start_date, today))
+        .annotate(sale_date=TruncDate("entry_date"))
+        .values("sale_date")
+        .annotate(total=Sum("cost"))
+        .order_by("sale_date")
+    )
+
+    # map sale_date -> total sales
+    sales_map = {sale["sale_date"]: sale["total"] for sale in sales_data}
+
+    # Fill in missing dates with zero sales
+    result = []
+    for i in range(period + 1):
+        day = start_date + timedelta(days=i)
+        result.insert(0, {"date": day.strftime("%Y-%m-%d"), "total_sales": Decimal(sales_map.get(day, 0))})
+
+    return result
 
 
 class DashboardInfoView(APIView):
