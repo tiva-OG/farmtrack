@@ -4,8 +4,8 @@ from django.http import HttpResponseRedirect
 from django.utils.encoding import force_bytes
 from django.contrib.auth import get_user_model
 from django.utils.http import urlsafe_base64_encode
-from django.core.mail import EmailMultiAlternatives
 from django.shortcuts import get_object_or_404, redirect
+from django.core.mail import EmailMultiAlternatives, send_mail
 from django.contrib.auth.tokens import default_token_generator
 
 from rest_framework.views import APIView
@@ -15,7 +15,9 @@ from rest_framework.decorators import api_view, action
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
-from .models import ShortenedLink
+import random
+
+from .models import ShortenedLink, OTP
 from .serializers import (
     UserSerializer,
     RegisterSerializer,
@@ -36,16 +38,78 @@ class RegisterView(APIView):
         serializer = RegisterSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
-            refresh = RefreshToken.for_user(user)
+
+            otp_code = f"{random.randint(1000, 9999)}"
+            expires_at = timezone.now() + timedelta(minutes=5)
+            OTP.objects.create(user=user, code=otp_code, expires_at=expires_at)
+
+            send_mail(
+                subject="Verify your FarmTrack Account",
+                message=f"""
+                Hi {user.email},
+
+                Thanks for signing up for FarmTrack!
+
+                To activate your account, please use the OTP below:
+                Your OTP: [{otp_code}]
+
+                This code is valid for 5 minutes.
+
+                If you didn't request this, please ignore this message contact our support team at {settings.SUPPORT_EMAIL}
+
+                Best regards,
+                Farm Track Team
+                """,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+            )
+
             return Response(
-                {
-                    "message": "User created successfully. Proceeding to onboarding.",
-                    "access": str(refresh.access_token),
-                    "refresh": str(refresh),
-                },
+                {"message": "OTP sent to email"},
                 status=status.HTTP_201_CREATED,
             )
+
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class VerifyOTPView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get("email")
+        code = request.data.get("otp")
+
+        if not email or not code:
+            return Response({"error": "Email and OTP are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        otp_record = OTP.objects.filter(user=user, code=code, is_used=False).last()
+
+        if not otp_record:
+            return Response({"error": "Invalid OTP."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if otp_record.is_expired():
+            return Response({"error": "OTP has expired."}, status=status.HTTP_400_BAD_REQUEST)
+
+        otp_record.is_used = True
+        otp_record.save()
+
+        user.is_active = True
+        user.save()
+
+        refresh = RefreshToken.for_user(user)
+        return Response(
+            {
+                "message": "Account verified. Proceeding to onboarding.",
+                "access": str(refresh.access_token),
+                "refresh": str(refresh),
+            },
+            status=status.HTTP_200_OK,
+        )
 
 
 # COMPLETE USER ONBOARDING
@@ -161,6 +225,69 @@ def logout_view(request):
         return Response({"message": "Logged out successfully"}, status=status.HTTP_200_OK)
     except Exception as e:
         return Response({"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from django.utils import timezone
+from django.conf import settings
+from django.core.mail import send_mail
+from django.contrib.auth import get_user_model
+from .models import OTP
+import random
+from datetime import timedelta
+
+User = get_user_model()
+
+
+class ResendOTPView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get("email")
+
+        if not email:
+            return Response({"error": "Email is required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return Response({"error": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        if user.is_active:
+            return Response({"message": "Account already verified."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Invalidate previous OTPs
+        OTP.objects.filter(user=user, is_used=False).update(is_used=True)
+
+        otp_code = f"{random.randint(1000, 9999)}"
+        expires_at = timezone.now() + timedelta(minutes=5)
+        OTP.objects.create(user=user, code=otp_code, expires_at=expires_at)
+
+        send_mail(
+            subject="Resend OTP - FarmTrack Account Verification",
+            message=f"""
+            Hi {user.email},
+            
+            Thanks for signing up for FarmTrack!
+            
+            To activate your account, please use the OTP below:
+
+            Your OTP: [{otp_code}]
+
+            This code is valid for 5 minutes.
+
+            If you didn't request this, please ignore this message contact our support team at {settings.SUPPORT_EMAIL}
+
+            Best regards,
+            Farm Track Team
+            """,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+        )
+
+        return Response({"message": "A new OTP has been sent to your email."}, status=status.HTTP_200_OK)
 
 
 # some api endpoints to include:

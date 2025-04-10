@@ -6,14 +6,14 @@ from .models import Feed, Livestock
 class FeedSerializer(serializers.ModelSerializer):
     class Meta:
         model = Feed
-        fields = ["id", "name", "action", "quantity", "cost", "entry_date", "farmer"]
+        fields = ["id", "name", "action", "quantity", "cost", "entry_date"]
         extra_kwargs = {"farmer": {"read_only": True}}
 
 
 class LivestockSerializer(serializers.ModelSerializer):
     class Meta:
         model = Livestock
-        fields = ["id", "name", "action", "quantity", "cost", "entry_date", "farmer"]
+        fields = ["id", "name", "action", "quantity", "cost", "entry_date"]
         extra_kwargs = {"farmer": {"read_only": True}}
 
 

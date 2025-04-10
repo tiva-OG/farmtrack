@@ -20,7 +20,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # initialize env
-env = environ.Env(DEBUG=(bool, False))
+env = environ.Env()
 
 # read .env file
 environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
@@ -36,7 +36,7 @@ SECRET_KEY = env("SECRET_KEY")
 DEBUG = env("DEBUG")
 # DEBUG = True
 
-ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["*"])
+ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost"])
 
 
 REST_FRAMEWORK = {
@@ -47,8 +47,8 @@ REST_FRAMEWORK = {
 }
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(hours=1),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=3),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
 }
 
 # Application definition

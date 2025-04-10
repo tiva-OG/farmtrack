@@ -47,7 +47,7 @@ class SalesTrendView(APIView):
     def get(self, request):
         user = request.user
         today = date.today()
-        start_date = today - timedelta(days=29)  # last 30 days including today
+        start_date = today - timedelta(days=13)  # last 14 days including today
 
         # query only `Sale` entries for this user
         sales_data = (
@@ -63,7 +63,7 @@ class SalesTrendView(APIView):
 
         # construct full timeline with zeros where necessary
         result = []
-        for i in range(30):
+        for i in range(13):
             day = start_date + timedelta(days=i)
             result.append({"date": day.strftime("%Y-%m-%d"), "total_sales": Decimal(sales_map.get(day, 0))})
 

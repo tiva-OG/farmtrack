@@ -6,6 +6,8 @@ from .views import (
     UserViewSet,
     RegisterView,
     OnboardingView,
+    VerifyOTPView,
+    ResendOTPView,
     PasswordResetRequestView,
     PasswordResetConfirmView,
     short_link_redirect,
@@ -17,7 +19,9 @@ router.register(r"user", UserViewSet)
 
 urlpatterns = [
     path("", include(router.urls)),
-    path("token-refresh/", TokenRefreshView.as_view(), name="refresh-token"),
+    path("token-refresh/", TokenRefreshView.as_view(), name="refresh_token"),
+    path("otp-resend/", ResendOTPView.as_view(), name="resend_otp"),
+    path("otp-verify/", VerifyOTPView.as_view(), name="verify_otp"),
     path("login/", TokenObtainPairView.as_view(), name="login"),
     path("register/", RegisterView.as_view(), name="register"),
     path("onboarding/", OnboardingView.as_view(), name="onboarding"),
