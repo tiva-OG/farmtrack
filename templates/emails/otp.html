@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FarmTrack Account Activation</title>
+    <style>
+      body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f4f4f4;
+        margin: 0;
+        padding: 0;
+      }
+
+      .container {
+        max-width: 600px;
+        margin: 20px auto;
+        padding: 20px;
+        background-color: #ffffff;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      }
+
+      h1 {
+        text-align: center;
+        color: #333;
+        font-size: 22px;
+      }
+
+      p {
+        font-size: 16px;
+        color: #555;
+        line-height: 1.5;
+        margin: 10px 0;
+      }
+
+      .otp-container {
+        background-color: #28a745;
+        color: #ffffff;
+        font-size: 18px;
+        padding: 8px 16px;
+        border-radius: 6px;
+        text-align: center;
+        display: inline-block;
+        margin: 20px 0;
+        font-weight: bold;
+      }
+
+      .cta-button {
+        display: inline-block;
+        background-color: #28a745;
+        color: #ffffff;
+        font-size: 16px;
+        padding: 8px 16px;
+        border-radius: 6px;
+        text-decoration: none;
+        text-align: center;
+        margin-top: 15px;
+      }
+
+      .cta-button:hover {
+        background-color: #218838;
+      }
+
+      .footer {
+        text-align: center;
+        font-size: 14px;
+        color: #777;
+        margin-top: 30px;
+      }
+
+      .footer a {
+        color: #007bff;
+        text-decoration: none;
+      }
+
+      .footer a:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+
+  <body>
+    <div class="container">
+      <h1>Welcome to FarmTrack!</h1>
+      <p>Hi {{ user.email }},</p>
+
+      <p>Thanks for signing up for FarmTrack! To activate your account, please use the OTP below:</p>
+
+      <div class="otp-container">
+        Your OTP: <strong>{{ otp_code }}</strong>
+      </div>
+
+      <p>If you didn't request this, please ignore this message or contact our support team at <a
+          href="mailto:{{ settings.SUPPORT_EMAIL }}">{{ settings.SUPPORT_EMAIL }}</a>.</p>
+
+      <p>Best regards,<br />FarmTrack Team</p>
+
+      <a href="#" class="cta-button">Activate Your Account</a>
+
+      <div class="footer">
+        <p>If you have any questions, feel free to <a href="mailto:{{ settings.SUPPORT_EMAIL }}">contact us</a>.</p>
+      </div>
+    </div>
+  </body>
+
+</html>

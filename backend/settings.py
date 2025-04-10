@@ -61,12 +61,14 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "info",
     "users",
     "inventory",
     "sales_expenses",
     "rest_framework",
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
+    "django.contrib.humanize",
 ]
 
 MIDDLEWARE = [
@@ -85,7 +87,7 @@ ROOT_URLCONF = "backend.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [],
+        "DIRS": [os.path.join(BASE_DIR, "templates")],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [
@@ -105,7 +107,9 @@ WSGI_APPLICATION = "backend.wsgi.application"
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 DATABASES = {
-    "default": env.db(default="postgresql://farmtrack_db_user:s7uBjUx6CT6w7cESEnJqk2YSHZcFal1o@dpg-cvqs96uuk2gs73c0k30g-a/farmtrack_db")
+    "default": env.db(
+        default="postgresql://farmtrack_db_user:s7uBjUx6CT6w7cESEnJqk2YSHZcFal1o@dpg-cvqs96uuk2gs73c0k30g-a/farmtrack_db"
+    )
 }
 
 
@@ -158,7 +162,7 @@ AUTH_USER_MODEL = "users.User"
 MEDIA_ROOT = BASE_DIR / "media"
 MEDIA_URL = "/media/"
 
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True

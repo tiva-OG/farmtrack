@@ -16,6 +16,7 @@ from django_filters.rest_framework import DjangoFilterBackend, FilterSet
 
 from .models import SalesExpenses
 from .serializers import SalesExpensesSerializer, SalesTrendSerializer
+from .services import get_weekly_sales_purchases, get_monthly_net_income
 
 
 class SalesExpensesFilter(FilterSet):
@@ -69,3 +70,25 @@ class SalesTrendView(APIView):
 
         serializer = SalesTrendSerializer(result, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class AnalyticsChartView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        data = {
+            "weekly_sales_purchases": get_weekly_sales_purchases(user, 4),
+            "monthly_net_income": get_monthly_net_income(user, 6),
+        }
+
+        return Response(data, status=status.HTTP_200_OK)
+
+
+class SalesExpensesChartView(APIView):
+    pass
+
+
+# class SalesPurchasesView
+
+# class NetProfitView

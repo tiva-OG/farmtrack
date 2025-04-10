@@ -1,23 +1,23 @@
-from django.urls import reverse
 from django.conf import settings
-from django.http import HttpResponseRedirect
+from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.contrib.auth import get_user_model
+from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode
-from django.shortcuts import get_object_or_404, redirect
 from django.core.mail import EmailMultiAlternatives, send_mail
-from django.contrib.auth.tokens import default_token_generator
 
 from rest_framework.views import APIView
 from rest_framework import status, viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, action
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated, AllowAny
 
 import random
+from datetime import datetime, timedelta
 
-from .models import ShortenedLink, OTP
+from .custom_token_generator import CustomTokenGenerator
+from .models import OTP
 from .serializers import (
     UserSerializer,
     RegisterSerializer,
@@ -28,18 +28,7 @@ from .serializers import (
 
 
 User = get_user_model()
-
-# Simple Backend Health Check View
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-
-@csrf_exempt
-def health_check(request):
-    print("DEBUGGING CSRF ERROR")
-    return JsonResponse({"status": "ok", "message": "Backend is LIVE!"})
-
-
-
+token_generator = CustomTokenGenerator()
 
 
 # REGISTER USER
@@ -55,31 +44,25 @@ class RegisterView(APIView):
             expires_at = timezone.now() + timedelta(minutes=5)
             OTP.objects.create(user=user, code=otp_code, expires_at=expires_at)
 
-            send_mail(
-                subject="Verify your FarmTrack Account",
-                message=f"""
-                Hi {user.email},
+            subject = ("Verify your FarmTrack Account",)
+            from_email = (settings.DEFAULT_FROM_EMAIL,)
+            to_email = [user.email]
 
-                Thanks for signing up for FarmTrack!
+            context = {
+                "user": user,
+                "otp_code": otp_code,
+                "current_year": datetime.now().year,
+            }
 
-                To activate your account, please use the OTP below:
-                Your OTP: [{otp_code}]
-
-                This code is valid for 5 minutes.
-
-                If you didn't request this, please ignore this message contact our support team at {settings.SUPPORT_EMAIL}
-
-                Best regards,
-                Farm Track Team
-                """,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
+            html_content = render_to_string("emails/otp.html", context)
+            text_content = (
+                "This email contains information to activate your FarmTrack account. Please view in an HTML-compatible client."
             )
 
-            return Response(
-                {"message": "OTP sent to email"},
-                status=status.HTTP_201_CREATED,
-            )
+            email = EmailMultiAlternatives(subject, text_content, from_email, to_email)
+            email.attach_alternative(html_content, "text/html")
+            email.send()
+            return Response({"message": "OTP sent to email"}, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -174,36 +157,31 @@ class PasswordResetRequestView(APIView):
             email = serializer.validated_data["email"]
             user = User.objects.get(email=email)
 
-            # generate token
-            token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(force_bytes(user.pk))
+            token = token_generator.make_token(user)
             reset_url = f"{settings.FRONTEND_URL}/password-reset/confirm/{uid}/{token}/"
 
             # create short link
-            short_link = ShortenedLink.objects.create(original_url=reset_url)
-            short_url = f"{settings.FRONTEND_URL}/password-reset/{short_link.short_code}/"
+            # short_link = ShortenedLink.objects.create(original_url=reset_url)
+            # short_url = f"{settings.FRONTEND_URL}/password-reset/{short_link.short_code}/"
 
             # send email
             subject = "Password Reset Request"
-            message = f"""
-            <p>Dear {user.first_name},</p>
-            <br />
-            <p>We received a request to reset your password for your Farm Track account. If you did not request this, please ignore this email.</p>
-            <p>To reset your password, click the button below:</p>
-            <br />
-            👉  <a href="{short_url}" style="background:#28a745;color:#ffffff;padding:10px 20px;border-radius:5px;text-decoration:none;">Reset Password</a>
-            <br />
-            <br />
-            <p>This link will expire in 24 hours for security reasons.</p>
-            <p>If you have any questions, feel free to contact our support team at {settings.SUPPORT_EMAIL}.</p>
-            <br />
-            <p>Best regards,</p>
-            <p>Farm Track Team</p>
-            """
             from_email = settings.DEFAULT_FROM_EMAIL
             to_email = [user.email]
-            email = EmailMultiAlternatives(subject, message, from_email, to_email)
-            email.attach_alternative(message, "text/html")
+
+            context = {
+                "user": user,
+                "reset_url": reset_url,
+                "settings": settings,
+                "current_year": datetime.now().year,
+            }
+
+            html_content = render_to_string("emails/password_reset.html", context)
+            text_content = "This email contains information to reset your FarmTrack account password. Please view in an HTML-compatible client."
+
+            email = EmailMultiAlternatives(subject, text_content, from_email, to_email)
+            email.attach_alternative(html_content, "text/html")
             email.send()
             return Response({"message": "Password reset link sent to email"}, status=status.HTTP_200_OK)
 
@@ -220,37 +198,6 @@ class PasswordResetConfirmView(APIView):
             return Response({"message": "Password reset successful"}, status=status.HTTP_200_OK)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-def short_link_redirect(request, short_code):
-    link = get_object_or_404(ShortenedLink, short_code=short_code)
-    return HttpResponseRedirect(link.original_url)
-
-
-# logout view to blacklist token if necessary
-@api_view(["POST"])
-def logout_view(request):
-    try:
-        refresh_token = request.data["refresh"]
-        token = RefreshToken(refresh_token)
-        token.blacklist()  # blacklist the refresh token
-        return Response({"message": "Logged out successfully"}, status=status.HTTP_200_OK)
-    except Exception as e:
-        return Response({"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)
-
-
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
-from django.utils import timezone
-from django.conf import settings
-from django.core.mail import send_mail
-from django.contrib.auth import get_user_model
-from .models import OTP
-import random
-from datetime import timedelta
-
-User = get_user_model()
 
 
 class ResendOTPView(APIView):
@@ -280,26 +227,37 @@ class ResendOTPView(APIView):
         send_mail(
             subject="Resend OTP - FarmTrack Account Verification",
             message=f"""
-            Hi {user.email},
+Hi {user.email},
             
-            Thanks for signing up for FarmTrack!
+Thanks for signing up for FarmTrack!
             
-            To activate your account, please use the OTP below:
+To activate your account, please use the OTP below:
+Your OTP:   [{otp_code}]
+(valid for 5 minutes)
 
-            Your OTP: [{otp_code}]
+If you didn't request this, please ignore this message contact our support team at {settings.SUPPORT_EMAIL}
 
-            This code is valid for 5 minutes.
-
-            If you didn't request this, please ignore this message contact our support team at {settings.SUPPORT_EMAIL}
-
-            Best regards,
-            Farm Track Team
-            """,
+Best regards,
+Farm Track Team
+""",
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[user.email],
         )
 
         return Response({"message": "A new OTP has been sent to your email."}, status=status.HTTP_200_OK)
+
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        try:
+            refresh_token = request.data["refresh"]
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({"message": "Logged out successfully"}, status=status.HTTP_200_OK)
+        except:
+            return Response({"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST)
 
 
 # some api endpoints to include:

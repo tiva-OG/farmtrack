@@ -1,0 +1,56 @@
+{% load humanize %}
+<!DOCTYPE html>
+<html lang="en">
+
+  <body style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
+    <div
+      style="max-width: 700px; margin: auto; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); padding: 24px;">
+      <!-- Logo -->
+      <div style="text-align: center; margin-bottom: 20px;">
+        <img src="https://yourdomain.com/static/logo.png" alt="FarmTrack Logo" style="height: 60px;" />
+      </div>
+
+      <!-- Greeting -->
+      <h2 style="color: #2d3748;">FarmTrack Analytics Report</h2>
+      <p style="color: #4a5568;">Hello {{ user.first_name }},</p>
+
+      <!-- Weekly Sales vs Purchases -->
+      <h3 style="color: #2d3748;">📊 Weekly Sales vs Purchases (Last 4 Weeks)</h3>
+      <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+        <tr>
+          <th style="border: 1px solid #ddd; background-color: #f2f2f2; padding: 10px; text-align: left;">Week</th>
+          <th style="border: 1px solid #ddd; background-color: #f2f2f2; padding: 10px; text-align: right;">Sales</th>
+          <th style="border: 1px solid #ddd; background-color: #f2f2f2; padding: 10px; text-align: right;">Purchases
+          </th>
+        </tr>
+        {% for row in weekly_data %}
+        <tr>
+          <td style="border: 1px solid #ddd; padding: 10px;">{{ row.week }}</td>
+          <td style="border: 1px solid #ddd; padding: 10px; text-align: right;">{{ row.sales|intcomma }}</td>
+          <td style="border: 1px solid #ddd; padding: 10px; text-align: right;">{{ row.purchases|intcomma }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+
+      <!-- Monthly Net Profit -->
+      <h3 style="color: #2d3748;">💰 Monthly Net Profit (Last 6 Months)</h3>
+      <table style="width: 100%; border-collapse: collapse; margin: 16px 0;">
+        <tr>
+          <th style="border: 1px solid #ddd; background-color: #f2f2f2; padding: 10px; text-align: left;">Month</th>
+          <th style="border: 1px solid #ddd; background-color: #f2f2f2; padding: 10px; text-align: right;">Net Income
+          </th>
+        </tr>
+        {% for row in monthly_data %}
+        <tr>
+          <td style="border: 1px solid #ddd; padding: 10px;">{{ row.month }}</td>
+          <td style="border: 1px solid #ddd; padding: 10px; text-align: right;">{{ row.net_income|intcomma }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+
+      <!-- Footer -->
+      <p style="color: #718096; margin-top: 32px;">Thanks for using <strong>FarmTrack</strong>! 🚜</p>
+    </div>
+  </body>
+
+</html>

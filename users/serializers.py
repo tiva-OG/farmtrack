@@ -4,9 +4,9 @@ from rest_framework import serializers
 from django.utils.encoding import force_str
 from django.contrib.auth import get_user_model
 from django.utils.http import urlsafe_base64_decode
-from django.contrib.auth.tokens import default_token_generator
 
 from inventory.utils import seed_initial_inventory
+from .custom_token_generator import CustomTokenGenerator
 
 User = get_user_model()
 
@@ -98,7 +98,8 @@ class PasswordResetSerializer(serializers.Serializer):
 
         # token expiration logic?
 
-        if not default_token_generator.check_token(user, data["token"]):
+        token_generator = CustomTokenGenerator()
+        if not token_generator.check_token(user, data["token"]):
             raise serializers.ValidationError("Invalid or Expired token.")
 
         return {"user": user, "new_password": data["new_password"]}

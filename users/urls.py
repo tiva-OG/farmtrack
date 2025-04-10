@@ -10,7 +10,7 @@ from .views import (
     ResendOTPView,
     PasswordResetRequestView,
     PasswordResetConfirmView,
-    short_link_redirect,
+    LogoutView,
 )
 
 
@@ -22,11 +22,10 @@ urlpatterns = [
     path("token-refresh/", TokenRefreshView.as_view(), name="refresh_token"),
     path("otp-resend/", ResendOTPView.as_view(), name="resend_otp"),
     path("otp-verify/", VerifyOTPView.as_view(), name="verify_otp"),
-    path("login/", TokenObtainPairView.as_view(), name="login"),
     path("register/", RegisterView.as_view(), name="register"),
+    path("login/", TokenObtainPairView.as_view(), name="login"),
+    path("logout/", LogoutView.as_view(), name="logout"),
     path("onboarding/", OnboardingView.as_view(), name="onboarding"),
     path("password-reset/", PasswordResetRequestView.as_view(), name="password_reset_request"),
     path("password-reset/confirm/", PasswordResetConfirmView.as_view(), name="password_reset_confirm"),
-    path("password-reset/<str:short_code>/", short_link_redirect, name="short_link_redirect"),
-    # path("logout/", logout_view, name="logout"),
 ]
