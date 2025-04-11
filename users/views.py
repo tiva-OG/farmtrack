@@ -246,25 +246,24 @@ class ResendOTPView(APIView):
         expires_at = timezone.now() + timedelta(minutes=5)
         OTP.objects.create(user=user, code=otp_code, expires_at=expires_at)
 
-        send_mail(
-            subject="Resend OTP - FarmTrack Account Verification",
-            message=f"""
-Hi {user.email},
-            
-Thanks for signing up for FarmTrack!
-            
-To activate your account, please use the OTP below:
-Your OTP:   [{otp_code}]
-(valid for 5 minutes)
+        subject = ("Verify your FarmTrack Account",)
+        from_email = settings.DEFAULT_FROM_EMAIL
+        to_email = [user.email]
 
-If you didn't request this, please ignore this message contact our support team at {settings.SUPPORT_EMAIL}
+        context = {
+            "user": user,
+            "otp_code": otp_code,
+            "current_year": datetime.now().year,
+        }
 
-Best regards,
-Farm Track Team
-""",
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
+        html_content = render_to_string("emails/otp.html", context)
+        text_content = (
+            "This email contains information to activate your FarmTrack account. Please view in an HTML-compatible client."
         )
+
+        email = EmailMultiAlternatives(subject, text_content, from_email, to_email)
+        email.attach_alternative(html_content, "text/html")
+        email.send()
 
         return Response({"message": "A new OTP has been sent to your email."}, status=status.HTTP_200_OK)
 
