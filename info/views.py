@@ -123,3 +123,26 @@ class AnalyticsReportView(APIView):
             return Response({"message": "Analytics report has been sent to email"}, status=status.HTTP_200_OK)
         except Exception as e:
             return Response({"error": f"Failed to send report: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class SalesExpensesLossView(APIView):
+    # {"name": "", "sales": "", "expenses": "", "loss": ""}
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+        livestock_type = user.livestock_type
+        livestock_type = ["Fish", "Poultry"] if livestock_type == "Both" else [livestock_type]
+
+        info = livestock_data = calculate_livestock_data(user, livestock_type)
+        info = [
+            {
+                "name": data["name"],
+                "sales": data["sold"],
+                "expenses": data["bought"],
+                "losses": data["dead"],
+            }
+            for data in livestock_data
+        ]
+
+        return Response(info, status=status.HTTP_200_OK)

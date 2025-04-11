@@ -83,12 +83,3 @@ class AnalyticsChartView(APIView):
         }
 
         return Response(data, status=status.HTTP_200_OK)
-
-
-class SalesExpensesChartView(APIView):
-    pass
-
-
-# class SalesPurchasesView
-
-# class NetProfitView
