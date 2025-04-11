@@ -34,7 +34,7 @@ def preview_email(request):
     ]
     return render(
         request,
-        "emails/password_reset.html",
+        "emails/otp.html",
         {
             "user": user,
             "weekly_data": weekly_data,
