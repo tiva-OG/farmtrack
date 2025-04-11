@@ -1,4 +1,5 @@
-from datetime import timedelta
+from decimal import Decimal
+from datetime import timedelta, date
 from collections import defaultdict
 
 from django.db.models import Sum
@@ -17,6 +18,7 @@ def get_weekly_sales_purchases(user, weeks):
         .annotate(week=ExtractWeek("entry_date"))
         .values("week")
         .annotate(total=Sum("cost"))
+        .order_by("week")
     )
 
     purchases = (
@@ -24,23 +26,30 @@ def get_weekly_sales_purchases(user, weeks):
         .annotate(week=ExtractWeek("entry_date"))
         .values("week")
         .annotate(total=Sum("cost"))
+        .order_by("week")
     )
 
-    result = defaultdict(lambda: {"sales": 0, "purchases": 0})
-
+    weekly_map = defaultdict(lambda: {"sales": 0, "purchases": 0})
     for s in sales:
-        result[s["week"]]["sales"] = s["total"]
+        weekly_map[s["week"]]["sales"] = s["total"]
     for p in purchases:
-        result[p["week"]]["purchases"] = p["total"]
+        weekly_map[p["week"]]["purchases"] = p["total"]
 
-    return [
-        {
-            "week": f"{now.year}-W{week}",
-            "sales": data["sales"],
-            "purchases": data["purchases"],
-        }
-        for week, data in sorted(result.items())
-    ]
+    # construct full timeline with zeros where necessary
+    result = []
+    for i in range(1, weeks + 1):
+        _date = start_date + timedelta(weeks=i)
+        week = _date.isocalendar()[1]
+
+        result.append(
+            {
+                "week": f"{now.year}-W{week}",
+                "sales": Decimal(weekly_map.get(week, {}).get("sales", 0)),
+                "purchases": Decimal(weekly_map.get(week, {}).get("purchases", 0)),
+            }
+        )
+
+    return result
 
 
 def get_monthly_net_income(user, months):
@@ -69,12 +78,30 @@ def get_monthly_net_income(user, months):
 
     expenses = feed_bought.union(livestock_dead)
 
-    result = defaultdict(lambda: {"sales": 0, "expenses": 0})
-
+    monthly_map = defaultdict(lambda: {"sales": 0, "expenses": 0})
     for s in sales:
-        result[s["month"]]["sales"] += s["total"]
+        monthly_map[s["month"]]["sales"] += s["total"]
     for e in expenses:
-        result[e["month"]]["expenses"] += e["total"]
+        monthly_map[e["month"]]["expenses"] += e["total"]
+
+    print("=========================================================================================================")
+    print(monthly_map)
+    print("=========================================================================================================")
+
+    # construct full timeline with zeros where necessary
+    result = []
+    for i in range(months):
+        month = start_date + timedelta(days=30 * 1)
+        # month.isocalendar().
+        break
+
+        result.append(
+            {
+                "month": month.strftime("%Y-%m"),
+                "sales": Decimal(weekly_map.get(week, {}).get("sales", 0)),
+                "purchases": Decimal(weekly_map.get(week, {}).get("purchases", 0)),
+            }
+        )
 
     return [
         {

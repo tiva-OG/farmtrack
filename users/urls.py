@@ -11,6 +11,7 @@ from .views import (
     PasswordResetRequestView,
     PasswordResetConfirmView,
     LogoutView,
+    LoginView,
 )
 
 
@@ -23,7 +24,7 @@ urlpatterns = [
     path("otp-resend/", ResendOTPView.as_view(), name="resend_otp"),
     path("otp-verify/", VerifyOTPView.as_view(), name="verify_otp"),
     path("register/", RegisterView.as_view(), name="register"),
-    path("login/", TokenObtainPairView.as_view(), name="login"),
+    path("login/", LoginView.as_view(), name="login"),
     path("logout/", LogoutView.as_view(), name="logout"),
     path("onboarding/", OnboardingView.as_view(), name="onboarding"),
     path("password-reset/", PasswordResetRequestView.as_view(), name="password_reset_request"),

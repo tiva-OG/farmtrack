@@ -1,9 +1,9 @@
 from django.conf import settings
 from django.utils import timezone
 from django.utils.encoding import force_bytes
-from django.contrib.auth import get_user_model
 from django.template.loader import render_to_string
 from django.utils.http import urlsafe_base64_encode
+from django.contrib.auth import get_user_model, authenticate
 from django.core.mail import EmailMultiAlternatives, send_mail
 
 from rest_framework.views import APIView
@@ -29,6 +29,28 @@ from .serializers import (
 
 User = get_user_model()
 token_generator = CustomTokenGenerator()
+
+
+class LoginView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        email = request.data.get("email")
+        password = request.data.get("password")
+
+        user = authenticate(email=email, password=password)
+        if user:
+            refresh = RefreshToken.for_user(user)
+            return Response(
+                {
+                    "message": "User logged in successfully.",
+                    "access": str(refresh.access_token),
+                    "refresh": str(refresh),
+                    "is_onboarded": user.is_onboarded,
+                },
+                status=status.HTTP_200_OK,
+            )
+        return Response({"error": "Invalid login credentials"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
 # REGISTER USER
