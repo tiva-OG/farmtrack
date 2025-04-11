@@ -66,7 +66,7 @@ class RegisterView(APIView):
             expires_at = timezone.now() + timedelta(minutes=5)
             OTP.objects.create(user=user, code=otp_code, expires_at=expires_at)
 
-            subject = ("Verify your FarmTrack Account",)
+            subject = "Verify your FarmTrack Account"
             from_email = (settings.DEFAULT_FROM_EMAIL,)
             to_email = [user.email]
 
