@@ -1,6 +1,7 @@
 from decimal import Decimal
-from datetime import timedelta, date
 from collections import defaultdict
+from datetime import timedelta, date
+from dateutil.relativedelta import relativedelta
 
 from django.db.models import Sum
 from django.utils import timezone
@@ -84,29 +85,20 @@ def get_monthly_net_income(user, months):
     for e in expenses:
         monthly_map[e["month"]]["expenses"] += e["total"]
 
-    print("=========================================================================================================")
-    print(monthly_map)
-    print("=========================================================================================================")
-
     # construct full timeline with zeros where necessary
     result = []
-    for i in range(months):
-        month = start_date + timedelta(days=30 * 1)
-        # month.isocalendar().
-        break
+    for i in range(1, months + 1):
+        _date = start_date + relativedelta(months=i)
+        month = date(_date.year, int(_date.strftime("%m")), 1)
+
+        net_sales = Decimal(monthly_map.get(month, {}).get("sales", 0))
+        net_expenses = Decimal(monthly_map.get(month, {}).get("expenses", 0))
 
         result.append(
             {
-                "month": month.strftime("%Y-%m"),
-                "sales": Decimal(weekly_map.get(week, {}).get("sales", 0)),
-                "purchases": Decimal(weekly_map.get(week, {}).get("purchases", 0)),
+                "month": month.strftime("%b, %Y"),
+                "net_income": net_sales - net_expenses,
             }
         )
 
-    return [
-        {
-            "month": month.strftime("%Y-%m"),
-            "net_income": data["sales"] - data["expenses"],
-        }
-        for month, data in sorted(result.items())
-    ]
+    return result

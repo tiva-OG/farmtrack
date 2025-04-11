@@ -183,10 +183,6 @@ class PasswordResetRequestView(APIView):
             token = token_generator.make_token(user)
             reset_url = f"{settings.FRONTEND_URL}/password-reset/confirm/{uid}/{token}/"
 
-            # create short link
-            # short_link = ShortenedLink.objects.create(original_url=reset_url)
-            # short_url = f"{settings.FRONTEND_URL}/password-reset/{short_link.short_code}/"
-
             # send email
             subject = "Password Reset Request"
             from_email = settings.DEFAULT_FROM_EMAIL
