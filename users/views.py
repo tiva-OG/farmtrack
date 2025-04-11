@@ -67,7 +67,7 @@ class RegisterView(APIView):
             OTP.objects.create(user=user, code=otp_code, expires_at=expires_at)
 
             subject = ("Verify your FarmTrack Account",)
-            from_email = (settings.DEFAULT_FROM_EMAIL,)
+            from_email = settings.DEFAULT_FROM_EMAIL
             to_email = [user.email]
 
             context = {
