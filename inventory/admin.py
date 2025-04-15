@@ -1,3 +1,5 @@
 from django.contrib import admin
+from .models import FeedActivity, LivestockActivity
 
-# Register your models here.
+admin.site.register(FeedActivity)
+admin.site.register(LivestockActivity)
