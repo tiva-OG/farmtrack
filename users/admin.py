@@ -7,22 +7,27 @@ User = get_user_model()
 
 class UserAdmin(BaseUserAdmin):
     model = User
-    list_display = ("email", "first_name", "last_name", "is_admin", "is_manager", "is_staff")
-    list_filter = ("is_admin", "is_manager")
+    list_display = ("email", "role", "first_name", "last_name", "farm_name", "is_active", "is_staff", "is_superuser")
+    list_filter = ("role", "livestock_type")
+    search_fields = ("email", "farm_name")
+    ordering = ("email",)
+
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         ("Personal Info", {"fields": ("first_name", "last_name")}),
         ("Farm Info", {"fields": ("farm_name", "livestock_type", "feed_low_stock_threshold")}),
-        (
-            "Permissions",
-            {"fields": ("is_active", "is_admin", "is_manager", "is_staff", "is_superuser", "groups", "user_permissions")},
-        ),
+        ("Permissions", {"fields": ("role", "is_staff", "is_active", "is_superuser", "groups", "user_permissions")}),
+        ("Dates", {"fields": ("last_login", "date_joined")}),
     )
     add_fieldsets = (
-        (None, {"classes": ("wide"), "fields": ("email", "password1", "password2", "is_admin", "is_manager", "is_staff")}),
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": ("email", "password1", "password2", "farm_name", "livestock_type", "role", "is_staff", "is_superuser"),
+            },
+        ),
     )
-    search_fields = ("email",)
-    ordering = ("email",)
 
 
 admin.site.register(User, UserAdmin)
