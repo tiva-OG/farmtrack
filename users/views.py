@@ -72,8 +72,6 @@ class CustomTokenRefreshView(APIView):
     def post(self, request, *args, **kwargs):
         refresh_token = request.COOKIES.get("refresh_token")
 
-        print(f"REFRESH TOKEN: {refresh_token}")
-
         if refresh_token is None:
             return Response({"detail": "Refresh token not found in cookie"}, status=status.HTTP_401_UNAUTHORIZED)
 

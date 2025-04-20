@@ -7,7 +7,7 @@ from .models import Sale
 
 @receiver(post_save, sender=LivestockActivity)
 def update_or_create_sale_from_activity(sender, instance, **kwargs):
-    if instance.action == "Sold":
+    if instance.action == "sold":
         sale, created = Sale.objects.update_or_create(
             livestock_activity=instance,
             defaults={
