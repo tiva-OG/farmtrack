@@ -12,7 +12,7 @@ class Sale(models.Model):
     name = models.CharField(max_length=100)  # signifies livestock type
     quantity = models.PositiveIntegerField()
     revenue = models.DecimalField(max_digits=10, decimal_places=2)
-    entry_date = models.DateField(default=timezone.localdate)
+    entry_date = models.DateField()
 
     livestock_activity = models.OneToOneField(LivestockActivity, on_delete=models.CASCADE, related_name="sale_record")
 

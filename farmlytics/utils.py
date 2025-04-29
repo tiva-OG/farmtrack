@@ -91,7 +91,7 @@ def get_grouping_trunc(timeframe):
             raise ValueError("Invalid timeframe")
 
 
-def get_aggregate(model, user, name, action, field, **kwargs):
+def get_inventory_aggregate(model, user, name, action, field, **kwargs):
     timeframe = kwargs.get("timeframe")
     mode = kwargs.get("mode")
 
@@ -100,6 +100,21 @@ def get_aggregate(model, user, name, action, field, **kwargs):
         queries = model.objects.filter(user=user, name=name, action=action, entry_date__range=(start_date, end_date))
     else:
         queries = model.objects.filter(user=user, name=name, action=action)
+
+    aggregate = queries.aggregate(total=Sum(field))["total"] or 0
+
+    return aggregate
+
+
+def get_sale_expense_aggregate(model, user, name, field, **kwargs):
+    timeframe = kwargs.get("timeframe")
+    mode = kwargs.get("mode")
+
+    if timeframe and mode:
+        start_date, end_date = get_timeframe_range(timeframe, mode)
+        queries = model.objects.filter(user=user, name=name, entry_date__range=(start_date, end_date))
+    else:
+        queries = model.objects.filter(user=user, name=name)
 
     aggregate = queries.aggregate(total=Sum(field))["total"] or 0
 

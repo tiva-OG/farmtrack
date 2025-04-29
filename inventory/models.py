@@ -25,10 +25,15 @@ class FeedActivity(models.Model):
     def __str__(self):
         return f"{self.name} - {self.action} ({self.quantity})"
 
+    class Meta:
+        verbose_name = "Feed Activity"
+        verbose_name_plural = "Feed Activities"
+        ordering = ("-entry_date",)
+
 
 class LivestockActivity(models.Model):
     ACTION_CHOICES = [
-        ("purchased", "Purchased"),
+        ("added", "Added"),
         ("sold", "Sold"),
         ("dead", "Dead"),
     ]
@@ -42,3 +47,8 @@ class LivestockActivity(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.action} ({self.quantity})"
+
+    class Meta:
+        verbose_name = "Livestock Activity"
+        verbose_name_plural = "Livestock Activities"
+        ordering = ("-entry_date",)

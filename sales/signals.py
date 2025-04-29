@@ -15,6 +15,7 @@ def update_or_create_sale_from_activity(sender, instance, **kwargs):
                 "name": instance.name,
                 "quantity": instance.quantity,
                 "revenue": instance.cost,
+                "entry_date": instance.entry_date,
             },
         )
     else:  # if action has changed from 'Sold', delete the sale

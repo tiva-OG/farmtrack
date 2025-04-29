@@ -1,7 +1,7 @@
 from django.db.models import Sum, Avg
 
 from inventory.models import FeedActivity, LivestockActivity
-from farmlytics.utils import get_aggregate, get_quantity
+from farmlytics.utils import get_inventory_aggregate, get_quantity
 
 
 def generate_inventory_report(user, livestock_types, timeframe="monthly", mode="calendar"):
@@ -18,27 +18,27 @@ def generate_inventory_report(user, livestock_types, timeframe="monthly", mode="
 
     for livestock in livestock_types:
         # FEED PURCHASED
-        purchased_quantity = get_aggregate(FeedActivity, user, f"{livestock} feed", "purchased", "quantity", timeframe=timeframe, mode=mode)
-        purchased_cost = get_aggregate(FeedActivity, user, f"{livestock} feed", "purchased", "cost", timeframe=timeframe, mode=mode)
+        purchased_quantity = get_inventory_aggregate(FeedActivity, user, f"{livestock} feed", "purchased", "quantity", timeframe=timeframe, mode=mode)
+        purchased_cost = get_inventory_aggregate(FeedActivity, user, f"{livestock} feed", "purchased", "cost", timeframe=timeframe, mode=mode)
 
         # FEED CONSUMED
-        consumed_quantity = get_aggregate(FeedActivity, user, f"{livestock} feed", "consumed", "quantity", timeframe=timeframe, mode=mode)
+        consumed_quantity = get_inventory_aggregate(FeedActivity, user, f"{livestock} feed", "consumed", "quantity", timeframe=timeframe, mode=mode)
 
         feed_purchased_quantity[f"{livestock}_feed"] = purchased_quantity
         feed_purchased_cost[f"{livestock}_feed"] = purchased_cost
         feed_consumed_quantity[f"{livestock}_feed"] = consumed_quantity
 
         # LIVESTOCK ADDED
-        added_quantity = get_aggregate(LivestockActivity, user, livestock, "added", "quantity", timeframe=timeframe, mode=mode)
-        added_cost = get_aggregate(LivestockActivity, user, livestock, "added", "cost", timeframe=timeframe, mode=mode)
+        added_quantity = get_inventory_aggregate(LivestockActivity, user, livestock, "added", "quantity", timeframe=timeframe, mode=mode)
+        added_cost = get_inventory_aggregate(LivestockActivity, user, livestock, "added", "cost", timeframe=timeframe, mode=mode)
 
         # LIVESTOCK SOLD
-        sold_quantity = get_aggregate(LivestockActivity, user, livestock, "sold", "quantity", timeframe=timeframe, mode=mode)
-        sold_cost = get_aggregate(LivestockActivity, user, livestock, "sold", "cost", timeframe=timeframe, mode=mode)
+        sold_quantity = get_inventory_aggregate(LivestockActivity, user, livestock, "sold", "quantity", timeframe=timeframe, mode=mode)
+        sold_cost = get_inventory_aggregate(LivestockActivity, user, livestock, "sold", "cost", timeframe=timeframe, mode=mode)
 
         # LIVESTOCK DEAD
-        dead_quantity = get_aggregate(LivestockActivity, user, livestock, "dead", "quantity", timeframe=timeframe, mode=mode)
-        dead_cost = get_aggregate(LivestockActivity, user, livestock, "dead", "cost", timeframe=timeframe, mode=mode)
+        dead_quantity = get_inventory_aggregate(LivestockActivity, user, livestock, "dead", "quantity", timeframe=timeframe, mode=mode)
+        dead_cost = get_inventory_aggregate(LivestockActivity, user, livestock, "dead", "cost", timeframe=timeframe, mode=mode)
 
         livestock_added_quantity[livestock] = added_quantity
         livestock_added_cost[livestock] = added_cost

@@ -5,10 +5,10 @@ from inventory.models import FeedActivity, LivestockActivity
 from .models import Expense
 
 
-# ======================== FeedActivity Handler ========================ssssss
+# ======================== FeedActivity Handler ========================
 @receiver(post_save, sender=FeedActivity)
 def update_or_create_sale_from_feed(sender, instance, **kwargs):
-    if instance.action == "Purchased":
+    if instance.action == "purchased":
         expense, created = Expense.objects.update_or_create(
             feed_activity=instance,
             defaults={
@@ -17,6 +17,7 @@ def update_or_create_sale_from_feed(sender, instance, **kwargs):
                 "quantity": instance.quantity,
                 "cost": instance.cost,
                 "source": "feed",
+                "entry_date": instance.entry_date,
             },
         )
     else:
@@ -31,7 +32,7 @@ def delete_sale_from_feed(sender, instance, **kwargs):
 # ======================== LivestockActivity Handler ========================
 @receiver(post_save, sender=LivestockActivity)
 def update_or_create_sale_from_livestock(sender, instance, **kwargs):
-    if instance.action in ["Purchased", "Dead"]:
+    if instance.action in ["added", "dead"]:
         expense, created = Expense.objects.update_or_create(
             livestock_activity=instance,
             defaults={
@@ -40,6 +41,7 @@ def update_or_create_sale_from_livestock(sender, instance, **kwargs):
                 "quantity": instance.quantity,
                 "cost": instance.cost,
                 "source": "livestock",
+                "entry_date": instance.entry_date,
             },
         )
     else:

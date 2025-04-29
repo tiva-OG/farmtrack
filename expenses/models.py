@@ -18,7 +18,7 @@ class Expense(models.Model):
     quantity = models.CharField(max_length=20)
     cost = models.DecimalField(max_digits=10, decimal_places=2)
     source = models.CharField(max_length=10, choices=SOURCE_CHOICES)
-    entry_date = models.DateField(default=timezone.localdate)
+    entry_date = models.DateField()
 
     feed_activity = models.OneToOneField(
         FeedActivity,
