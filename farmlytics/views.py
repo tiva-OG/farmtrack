@@ -35,9 +35,9 @@ class DashboardView(APIView):
 
         data = {
             "feed_low_stock_threshold": feed_low_stock_threshold,
+            **inventory_summary,
             "total_revenue": sales_report["total_revenue"],
             "profit_trend": profit_trend,
-            **inventory_summary,
         }
 
         return Response(data, status=status.HTTP_200_OK)
@@ -51,7 +51,7 @@ class AnalyticsView(APIView):
         livestock_types = ["fish", "poultry"] if user.livestock_type == "both" else [user.livestock_type]
 
         TIMEFRAME = "monthly"
-        MODE = "calendar"
+        MODE = "rolling"
 
         # feed consumption
         # livestock sales

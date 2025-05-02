@@ -24,9 +24,9 @@ def generate_inventory_report(user, livestock_types, timeframe="monthly", mode="
         # FEED CONSUMED
         consumed_quantity = get_inventory_aggregate(FeedActivity, user, f"{livestock} feed", "consumed", "quantity", timeframe=timeframe, mode=mode)
 
-        feed_purchased_quantity[f"{livestock}_feed"] = purchased_quantity
-        feed_purchased_cost[f"{livestock}_feed"] = purchased_cost
-        feed_consumed_quantity[f"{livestock}_feed"] = consumed_quantity
+        feed_purchased_quantity[f"{livestock} feed"] = purchased_quantity
+        feed_purchased_cost[f"{livestock} feed"] = purchased_cost
+        feed_consumed_quantity[f"{livestock} feed"] = consumed_quantity
 
         # LIVESTOCK ADDED
         added_quantity = get_inventory_aggregate(LivestockActivity, user, livestock, "added", "quantity", timeframe=timeframe, mode=mode)
@@ -71,7 +71,7 @@ def generate_inventory_summary(user, livestock_types):
         consumed_feed = get_quantity(FeedActivity, user, f"{livestock} feed", "consumed")
 
         current_feed = max((initial_feed + purchased_feed) - consumed_feed, 0)
-        feed_quantity[f"{livestock}_feed"] = current_feed
+        feed_quantity[f"{livestock} feed"] = current_feed
 
         initial_livestock = get_quantity(LivestockActivity, user, livestock, "initial")
         added_livestock = get_quantity(LivestockActivity, user, livestock, "added")
@@ -82,7 +82,7 @@ def generate_inventory_summary(user, livestock_types):
         current_livestock = max(total_livestock - (sold_livestock + dead_livestock), 0)
         mortality = (dead_livestock / total_livestock) * 100 if total_livestock else 0
         livestock_quantity[livestock] = current_livestock
-        livestock_mortality[livestock] = mortality
+        livestock_mortality[livestock] = round(mortality, 2)
 
     return {
         "feed_quantity": feed_quantity,

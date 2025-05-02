@@ -13,8 +13,6 @@ def generate_profit_trend(user, timeframe="bi-weekly", mode="rolling"):
 
     periods = set([item["period"] for item in sales_trend] + [item["period"] for item in expenses_trend])
 
-    print(periods)
-
     for period in sorted(periods):
         revenue = next((item["total"] for item in sales_trend if item["period"] == period), 0)
         expense = next((item["total"] for item in expenses_trend if item["period"] == period), 0)

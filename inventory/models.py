@@ -11,6 +11,7 @@ class FeedActivity(models.Model):
         ("poultry feed", "Poultry Feed"),
     ]
     ACTION_CHOICES = [
+        ("initial", "Initial"),
         ("purchased", "Purchased"),
         ("consumed", "Consumed"),
     ]
@@ -21,6 +22,8 @@ class FeedActivity(models.Model):
     quantity = models.DecimalField(max_digits=10, decimal_places=2)
     cost = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     entry_date = models.DateField(default=timezone.localdate)
+
+    is_locked = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.name} - {self.action} ({self.quantity})"
@@ -33,6 +36,7 @@ class FeedActivity(models.Model):
 
 class LivestockActivity(models.Model):
     ACTION_CHOICES = [
+        ("initial", "Initial"),
         ("added", "Added"),
         ("sold", "Sold"),
         ("dead", "Dead"),
@@ -44,6 +48,8 @@ class LivestockActivity(models.Model):
     quantity = models.PositiveIntegerField()
     cost = models.DecimalField(max_digits=10, decimal_places=2)
     entry_date = models.DateField(default=timezone.localdate)
+
+    is_locked = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.name} - {self.action} ({self.quantity})"

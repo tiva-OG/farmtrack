@@ -1,4 +1,4 @@
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 
 from inventory.models import FeedActivity, LivestockActivity
@@ -13,9 +13,9 @@ def check_low_feed_stock(sender, instance, created, **kwargs):
 
 
 # ======================== High Mortality Handler ========================
-@receiver(post_save, sender=LivestockActivity)
-def check_high_mortality(sender, instance, created, **kwargs):
-    if created and instance.action.lower() == "dead":
+@receiver(pre_save, sender=LivestockActivity)
+def check_high_mortality(sender, instance, **kwargs):
+    if instance.action.lower() == "dead":
         notify_high_mortality(instance.user, instance)
 
 

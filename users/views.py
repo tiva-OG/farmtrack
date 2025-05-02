@@ -14,11 +14,44 @@ from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 from datetime import timedelta
 
-from .serializers import CustomTokenObtainSerializer, UserSerializer
+from .serializers import CustomTokenObtainSerializer, OnboardUserSerializer, RegisterUserSerializer, UserSerializer
 
 User = get_user_model()
 
 
+# ========================================== Register user ==========================================
+class RegisterUserView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        user_data = request.data
+        serializer = RegisterUserSerializer(data=user_data)
+        if serializer.is_valid():
+            user = serializer.save()
+
+            # Implement 2FA Logic
+            user.is_active = True  # this should come in onboarding i.e. after 2FA
+            user.save()
+
+            return Response({"detail": "OTP sent to email 'Please proceed to onboarding'"}, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# ========================================== Onboard user ==========================================
+class OnboardUserView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def patch(self, request):
+        user = request.user
+        user_data = request.data
+        serializer = OnboardUserSerializer(user, data=user_data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"detail": "Onboarding complete."}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+# ========================================== Get & Update user profile ==========================================
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -45,6 +78,7 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
+# ========================================== Login and get access & refresh tokens ==========================================
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainSerializer
 
@@ -68,9 +102,12 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         return response
 
 
+# ========================================== Refresh access token ==========================================
 class CustomTokenRefreshView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request, *args, **kwargs):
-        refresh_token = request.COOKIES.get("refresh_token")
+        refresh_token = request.data.get("refresh") or request.COOKIES.get("refresh_token")
 
         if refresh_token is None:
             return Response({"detail": "Refresh token not found in cookie"}, status=status.HTTP_401_UNAUTHORIZED)
@@ -89,6 +126,7 @@ class CustomTokenRefreshView(APIView):
             return Response({"detail": "Invalid or expired refresh token"}, status=status.HTTP_401_UNAUTHORIZED)
 
 
+# ========================================== Logout user ==========================================
 class LogoutView(APIView):
     permission_classes = [IsAuthenticated]
 

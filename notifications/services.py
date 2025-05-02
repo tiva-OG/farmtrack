@@ -12,7 +12,7 @@ def notify_low_feed_stock(user, feed_activity):
     notify user if feed stock is below threshold
     """
 
-    LOW_STOCK_THRESHOLD = user.low_stock_threshold or 20
+    LOW_STOCK_THRESHOLD = user.feed_low_stock_threshold or 20
     LIVESTOCK_TYPES = ["fish", "poultry"] if user.livestock_type == "both" else [user.livestock_type]
 
     available_feed = generate_inventory_summary(user, LIVESTOCK_TYPES)["feed_quantity"][feed_activity.name]
@@ -21,7 +21,7 @@ def notify_low_feed_stock(user, feed_activity):
         create_notification(
             user=user,
             title="Low Feed Stock Alert",
-            message=f"Your stock of {feed_activity.name} is critically low ({available_feed}kg left). Consider restocking!",
+            message=f"Your stock of {feed_activity.name} is critically low ({available_feed:.2f}kg left). Consider restocking!",
         )
 
 
@@ -32,6 +32,9 @@ def notify_high_mortality(user, livestock_activity):
 
     OVERALL_DEAD = get_inventory_aggregate(LivestockActivity, user, livestock_activity.name, "dead", "quantity")
     MONTHLY_DEAD = get_inventory_aggregate(LivestockActivity, user, livestock_activity.name, "dead", "quantity", timeframe="monthly", mode="calendar")
+
+    print(f"MONTHLY DEAD: {MONTHLY_DEAD}")
+    print(f"OVERALL DEAD: {OVERALL_DEAD}")
 
     if livestock_activity.quantity > MONTHLY_DEAD:
         create_notification(
@@ -55,17 +58,17 @@ def notify_large_sale(user, sale):
     OVERALL_SALE = get_sale_expense_aggregate(Sale, user, sale.name, "revenue")
     MONTHLY_SALE = get_sale_expense_aggregate(Sale, user, sale.name, "revenue", timeframe="monthly", mode="calendar")
 
-    if sale.revenue > MONTHLY_SALE:
+    if sale.cost > MONTHLY_SALE:
         create_notification(
             user=user,
             title="Monthly High Sale",
-            message=f"You made your largest monthly sale worth ₦{sale.revenue:.2f}",
+            message=f"You made your largest monthly sale worth ₦{sale.cost:.2f}",
         )
-    if sale.revenue > OVERALL_SALE:
+    if sale.cost > OVERALL_SALE:
         create_notification(
             user=user,
             title="Overall High Sale",
-            message=f"You made your overall largest sale worth ₦{sale.revenue:.2f}",
+            message=f"You made your overall largest sale worth ₦{sale.cost:.2f}",
         )
 
 

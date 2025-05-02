@@ -1,6 +1,6 @@
+from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import generics, status, exceptions
 from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import FeedActivity, LivestockActivity
@@ -18,7 +18,7 @@ class FeedActivityListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        return FeedActivity.objects.filter(user=user).order_by("-entry_date")
+        return FeedActivity.objects.filter(user=user).exclude(action="initial").order_by("-entry_date")
 
     def perform_create(self, serializer):
         if serializer.is_valid():
@@ -29,13 +29,30 @@ class FeedActivityListCreateView(generics.ListCreateAPIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class FeedActivityRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+class FeedActivityDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = FeedActivitySerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        return FeedActivity.objects.filter(user=user)
+        return FeedActivity.objects.filter(user=user).exclude(action="initial")
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.is_locked:
+            return Response({"detail": "Initial feed activity cannot be edited."}, status=status.HTTP_403_FORBIDDEN)
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.is_locked:
+            return Response({"detail": "Initial feed activity cannot be deleted."}, status=status.HTTP_403_FORBIDDEN)
+
+        self.perform_destroy(instance)
+        return Response({"detail": "Feed activity deleted successfully."}, status=status.HTTP_200_OK)
+
+    def perform_destroy(self, instance):
+        instance.delete()
 
 
 # =========================== LIVESTOCK ACTIVITY ===========================
@@ -49,7 +66,7 @@ class LivestockActivityListCreateView(generics.ListCreateAPIView):
 
     def get_queryset(self):
         user = self.request.user
-        return LivestockActivity.objects.filter(user=user).order_by("-entry_date")
+        return LivestockActivity.objects.filter(user=user).exclude(action="initial").order_by("-entry_date")
 
     def perform_create(self, serializer):
         if serializer.is_valid():
@@ -60,10 +77,27 @@ class LivestockActivityListCreateView(generics.ListCreateAPIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-class LivestockActivityRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+class LivestockActivityDetailView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = LivestockActivitySerializer
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
         user = self.request.user
-        return LivestockActivity.objects.filter(user=user)
+        return LivestockActivity.objects.filter(user=user).exclude(action="initial")
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.is_locked:
+            return Response({"detail": "Initial livestock activity cannot be edited."}, status=status.HTTP_403_FORBIDDEN)
+        return super().update(request, *args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.is_locked:
+            return Response({"detail": "Initial livestock activity cannot be deleted."}, status=status.HTTP_403_FORBIDDEN)
+
+        self.perform_destroy(instance)
+        return Response({"detail": "Livestock activity deleted successfully."}, status=status.HTTP_200_OK)
+
+    def perform_destroy(self, instance):
+        instance.delete()
